@@ -1,11 +1,10 @@
-
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 
 import { sequelize } from './models/index.js';
-import authRoutes from './auth/auth.js';
-import habitRoutes from './routes/habit.js';
+import authRoutes from './routes/auth/auth.js';
+import habitRoutes from './routes/habits.js';
 
 dotenv.config();
 
