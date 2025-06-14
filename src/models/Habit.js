@@ -1,4 +1,3 @@
-
 export default (sequelize, DataTypes) => {
   const Habit = sequelize.define('Habit', {
     title: { type: DataTypes.STRING, allowNull: false },

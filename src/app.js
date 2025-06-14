@@ -1,29 +1,23 @@
 
 import dotenv from 'dotenv';
-dotenv.config();
 import express from 'express';
 import cors from 'cors';
 
 import { sequelize } from './models/index.js';
-
 import authRoutes from './auth/auth.js';
-
 import habitRoutes from './routes/habit.js';
+
+dotenv.config();
 
 const app = express();
 
-
 app.use(cors());
-
-
 app.use(express.json());
-
 
 app.use('/auth', authRoutes);
 app.use('/api/habits', habitRoutes); 
 
 const PORT = process.env.PORT || 3001;
-
 
 sequelize.sync().then(() => {
   app.listen(PORT, () => {

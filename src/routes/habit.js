@@ -7,20 +7,20 @@ const router = express.Router();
 router.post('/', verifyToken, async (req, res) => {
   try {
     const { title, frequency } = req.body;
-    const habit = await Habit.create({ title, frequency, userId: req.userId });
-    res.json(habit);
+    const habit = await Habit.create({ title, frequency, userId: req.user.userId });
+    res.status(201).json(habit);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao criar hábito' });
   }
 });
 
-router.post('/create', verifyToken, async (req, res) => {
+router.post('/create', verifyToken, async (req, res) => { 
   const { title, description, frequency } = req.body;
-  const userId = req.user.userId; // 👈 este é o valor extraído do token
+  const userId = req.user.userId;
 
   try {
     const habit = await Habit.create({ title, description, frequency, userId });
-    res.json(habit);
+    res.status(201).json(habit);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao criar hábito' });
   }
