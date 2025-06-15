@@ -3,24 +3,27 @@ import js from '@eslint/js';
 import globals from 'globals';
 
 export default defineConfig([
-  {
-    files: ['**/*.{js,mjs,cjs}'],
-    plugins: { js },
-    extends: ['plugin:js/recommended'],
-    env: {
-      node: true,
-      es2021: true,
+    {
+        files: ['**/*.{js,mjs,cjs}'],
+        plugins: { js },
+        rules: js.configs.recommended.rules,
+        languageOptions: {
+            ecmaVersion: 12,
+            sourceType: 'module',
+            globals: {
+                ...globals.node,
+                ...globals.es2021,
+            },
+        },
+        ignores: ['node_modules', 'dist', 'build', 'coverage', 'public', 'database.sqlite', '.env'],
     },
-    languageOptions: {
-      globals: globals.node,
-      ecmaVersion: 12,
-      sourceType: 'module',
+    {
+        files: ['**/*.{js,mjs,cjs}'],
+        languageOptions: {
+            globals: {
+                ...globals.browser,
+                ...globals.es2021,
+            },
+        },
     },
-  },
-  {
-    files: ['**/*.{js,mjs,cjs}'],
-    languageOptions: {
-      globals: globals.browser,
-    },
-  },
 ]);

@@ -14,12 +14,12 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/auth', authRoutes);
-app.use('/api/habits', habitRoutes); 
+app.use('/api/habits', habitRoutes);
 
 const PORT = process.env.PORT || 3001;
 
 sequelize.sync().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
-  });
+    app.listen(PORT, () => {
+        console.log(`Servidor rodando em http://localhost:${PORT}`);
+    });
 });
