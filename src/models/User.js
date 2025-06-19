@@ -12,13 +12,27 @@ export default (sequelize) =>
             },
             password: {
                 type: DataTypes.STRING,
-                allowNull: false,
+                allowNull: true,
+            },
+            name: {
+                type: DataTypes.STRING,
+                allowNull: true,
+            },
+            avatar: {
+                type: DataTypes.STRING,
+                allowNull: true,
+            },
+            provider: {
+                type: DataTypes.STRING,
+                defaultValue: 'local',
             },
         },
         {
             hooks: {
                 beforeCreate: async (user) => {
-                    user.password = await bcrypt.hash(user.password, 10);
+                    if (user.password) {
+                        user.password = await bcrypt.hash(user.password, 10);
+                    }
                 },
             },
         },
