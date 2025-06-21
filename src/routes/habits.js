@@ -1,7 +1,8 @@
 import express from 'express';
 import { Habit } from '../models/index.js';
 import { HabitCompletion } from '../models/index.js';
-import { verifyToken } from '../middleware/authMiddleware.js';
+import verifyToken from '../middleware/authMiddleware.js';
+
 
 const router = express.Router();
 
