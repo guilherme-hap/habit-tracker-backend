@@ -3,15 +3,16 @@ class ReportService {
       this.models = models;
     }
   
-    async generateHabitReport(userId, format = 'json') {
+    async generateHabitReport(userId, format = 'json', filters = {}) {
       const statsService = new (await import('./statsService.js')).default(this.models);
-      const stats = await statsService.getUserStats(userId);
-  
+      const stats = await statsService.getUserStats(userId, filters); 
+    
       if (format === 'pdf') {
         return this._generatePDFReport(stats);
       }
       return stats;
     }
+    
   
     async _generatePDFReport(stats) {
       const { default: PDFDocument } = await import('pdfkit');
