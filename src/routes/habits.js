@@ -3,14 +3,13 @@ import { Habit } from '../models/index.js';
 import { HabitCompletion } from '../models/index.js';
 import verifyToken from '../middleware/authMiddleware.js';
 
-
 const router = express.Router();
 
 router.post('/', verifyToken, async (req, res) => {
     try {
-        const { title, frequency } = req.body;
+        const { name, frequency } = req.body;
         const habit = await Habit.create({
-            title,
+            name,
             frequency,
             userId: req.user.userId,
         });
@@ -27,12 +26,12 @@ router.post('/', verifyToken, async (req, res) => {
 });
 
 router.post('/create', verifyToken, async (req, res) => {
-    const { title, description, frequency } = req.body;
+    const { name, description, frequency } = req.body;
     const userId = req.user.userId;
 
     try {
         const habit = await Habit.create({
-            title,
+            name,
             description,
             frequency,
             userId,
@@ -67,7 +66,7 @@ router.get('/all', verifyToken, async (req, res) => {
 
 router.put('/update/:id', verifyToken, async (req, res) => {
     const { id } = req.params;
-    const { title, description, frequency } = req.body;
+    const { name, description, frequency } = req.body;
 
     try {
         const habit = await Habit.findOne({
@@ -83,7 +82,7 @@ router.put('/update/:id', verifyToken, async (req, res) => {
             });
         }
 
-        habit.title = title || habit.title;
+        habit.name = name || habit.name;
         habit.description = description || habit.description;
         habit.frequency = frequency || habit.frequency;
         await habit.save();
