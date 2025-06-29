@@ -35,9 +35,8 @@ router.post('/register', async (req, res) => {
     }
 });
 
-
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     if (!email || !password) {
         return res.status(400).json({
@@ -45,19 +44,29 @@ router.post('/login', async (req, res) => {
         });
     }
 
-    const user = await User.findOne({
-        where: { email },
-    });
+    try {
+        const user = await User.findOne({
+            where: { email },
+        });
 
-    if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
-        return res.status(401).json({ error: 'Credenciais inválidas' });
+        if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
+            return res.status(401).json({ error: 'Credenciais inválidas' });
+        }
+
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+            expiresIn: rememberMe ? '30d' : process.env.JWT_EXPIRES_IN || '12h',
+        });
+
+        res.json({
+            token,
+            userId: user.id,
+            name: user.name,
+            avatar: user.avatar,
+        });
+    } catch (err) {
+        console.error('Erro no login:', err);
+        res.status(500).json({ error: 'Erro interno ao realizar login' });
     }
-
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-    });
-
-    res.json({ token, userId: user.id, name: user.name, avatar: user.avatar });
 });
 
 router.post('/google', async (req, res) => {
