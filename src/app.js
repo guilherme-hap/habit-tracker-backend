@@ -10,6 +10,7 @@ import statsRoutes from './routes/stats.js';
 import reportsRoutes from './routes/reports.js';
 import setupStatsAggregation from './jobs/statsAggregation.js';
 import userRoutes from './routes/user.js';
+import tagRoutes from './routes/tag.js';
 
 dotenv.config();
 
@@ -23,24 +24,25 @@ app.use('/api/habits', habitRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/reports', reportsRoutes(sequelize.models));
 app.use('/api/user', userRoutes);
+app.use('/api/tags', tagRoutes);
 
 if (process.env.NODE_ENV !== 'test') {
-  cron.schedule('0 2 * * *', () => {
-    console.log('Running stats aggregation job...');
-    setupStatsAggregation(sequelize.models);
-  });
+    cron.schedule('0 2 * * *', () => {
+        console.log('Running stats aggregation job...');
+        setupStatsAggregation(sequelize.models);
+    });
 }
 
 const PORT = process.env.PORT || 3001;
 
 sequelize.sync().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
-    
-    if (process.env.NODE_ENV === 'development') {
-      setupStatsAggregation(sequelize.models);
-    }
-  });
+    app.listen(PORT, () => {
+        console.log(`Servidor rodando em http://localhost:${PORT}`);
+
+        if (process.env.NODE_ENV === 'development') {
+            setupStatsAggregation(sequelize.models);
+        }
+    });
 });
 
 export default app;

@@ -1,8 +1,8 @@
 import { DataTypes } from 'sequelize';
 import bcrypt from 'bcryptjs';
 
-export default (sequelize) =>
-    sequelize.define(
+export default (sequelize) => {
+    const User = sequelize.define(
         'User',
         {
             email: {
@@ -37,3 +37,11 @@ export default (sequelize) =>
             },
         },
     );
+
+    User.associate = (models) => {
+        User.hasMany(models.Habit, { foreignKey: 'userId' });
+        User.hasMany(models.Tag, { foreignKey: 'userId' });
+    };
+
+    return User;
+};

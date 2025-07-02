@@ -1,50 +1,38 @@
 import express from 'express';
-import { Habit } from '../models/index.js';
-import { HabitCompletion } from '../models/index.js';
+import { Tag, Habit, HabitCompletion } from '../models/index.js';
 import verifyToken from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 router.post('/', verifyToken, async (req, res) => {
     try {
-        const { name, frequency } = req.body;
-        const habit = await Habit.create({
-            name,
-            frequency,
-            userId: req.user.userId,
-        });
-        res.status(201).json({
-            message: 'Hábito criado com sucesso',
-            habit,
-        });
-    } catch (err) {
-        console.error('Erro ao criar hábito:', err);
-        res.status(500).json({
-            error: 'Erro ao criar hábito',
-        });
-    }
-});
+        const { name, description, frequency, tags = [] } = req.body;
 
-router.post('/create', verifyToken, async (req, res) => {
-    const { name, description, frequency } = req.body;
-    const userId = req.user.userId;
-
-    try {
         const habit = await Habit.create({
             name,
             description,
             frequency,
-            userId,
+            userId: req.user.userId,
         });
+
+        if (Array.isArray(tags) && tags.every((t) => typeof t === 'string')) {
+            const tagInstances = await Tag.findAll({
+                where: {
+                    name: tags,
+                    userId: req.user.userId,
+                },
+            });
+
+            await habit.setTags(tagInstances);
+        }
+
         res.status(201).json({
             message: 'Hábito criado com sucesso',
             habit,
         });
     } catch (err) {
         console.error('Erro ao criar hábito:', err);
-        res.status(500).json({
-            error: 'Erro ao criar hábito',
-        });
+        res.status(500).json({ error: 'Erro ao criar hábito' });
     }
 });
 
@@ -54,6 +42,13 @@ router.get('/all', verifyToken, async (req, res) => {
             where: {
                 userId: req.user.userId,
             },
+            include: [
+                {
+                    model: Tag,
+                    as: 'tags',
+                    through: { attributes: [] },
+                },
+            ],
         });
         res.status(200).json(habits);
     } catch (err) {
@@ -66,7 +61,7 @@ router.get('/all', verifyToken, async (req, res) => {
 
 router.put('/update/:id', verifyToken, async (req, res) => {
     const { id } = req.params;
-    const { name, description, frequency } = req.body;
+    const { name, description, frequency, tags = [] } = req.body;
 
     try {
         const habit = await Habit.findOne({
@@ -77,25 +72,32 @@ router.put('/update/:id', verifyToken, async (req, res) => {
         });
 
         if (!habit) {
-            return res.status(404).json({
-                error: 'Hábito não encontrado',
-            });
+            return res.status(404).json({ error: 'Hábito não encontrado' });
         }
 
-        habit.name = name || habit.name;
-        habit.description = description || habit.description;
-        habit.frequency = frequency || habit.frequency;
+        habit.name = name ?? habit.name;
+        habit.description = description ?? habit.description;
+        habit.frequency = frequency ?? habit.frequency;
         await habit.save();
 
+        if (Array.isArray(tags) && tags.every((t) => typeof t === 'string')) {
+            const tagInstances = await Tag.findAll({
+                where: {
+                    name: tags,
+                    userId: req.user.userId,
+                },
+            });
+
+            await habit.setTags(tagInstances);
+        }
+
         res.json({
-            message: 'Hábito atualizado',
+            message: 'Hábito atualizado com sucesso',
             habit,
         });
     } catch (err) {
         console.error('Erro ao atualizar hábito:', err);
-        res.status(500).json({
-            error: 'Erro ao atualizar hábito.',
-        });
+        res.status(500).json({ error: 'Erro ao atualizar hábito' });
     }
 });
 

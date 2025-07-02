@@ -1,23 +1,40 @@
-export default (sequelize, DataTypes) => {
-    const Habit = sequelize.define('Habit', {
-        name: DataTypes.STRING,
-        frequency: DataTypes.STRING, 
-        tags: {
+const Habit = (sequelize, DataTypes) => {
+    const HabitModel = sequelize.define('Habit', {
+        name: {
             type: DataTypes.STRING,
-            get() {
-              const raw = this.getDataValue('tags');
-              return raw ? raw.split(',') : [];
-            },
-            set(value) {
-              this.setDataValue('tags', Array.isArray(value) ? value.join(',') : value);
-            }
-          },
-        userId: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        frequency: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        description: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
     });
 
-    Habit.associate = (models) => {
-        Habit.hasMany(models.HabitCompletion, { foreignKey: 'habitId', as: 'completions' });
+    HabitModel.associate = (models) => {
+        HabitModel.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+
+        HabitModel.belongsToMany(models.Tag, {
+            through: 'HabitTag',
+            foreignKey: 'habitId',
+            otherKey: 'tagId',
+            as: 'tags',
+        });
+
+        HabitModel.hasMany(models.HabitCompletion, {
+            foreignKey: 'habitId',
+            as: 'completions',
+        });
     };
 
-    return Habit;
+    return HabitModel;
 };
+
+export default Habit;

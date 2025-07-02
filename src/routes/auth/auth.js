@@ -73,9 +73,7 @@ router.post('/google', async (req, res) => {
     const { token } = req.body;
 
     if (!token) {
-        return res.status(400).json(
-            { error: 'Token do Google não fornecido' }
-        );
+        return res.status(400).json({ error: 'Token do Google não fornecido' });
     }
 
     try {
@@ -105,9 +103,7 @@ router.post('/google', async (req, res) => {
         res.json({ token: jwtToken, userId: user.id, name: user.name, avatar: user.avatar });
     } catch (err) {
         console.error('Erro no login com Google:', err.message);
-        res.status(401).json(
-            { error: 'Token Google inválido' }
-        );
+        res.status(401).json({ error: 'Token Google inválido' });
     }
 });
 
