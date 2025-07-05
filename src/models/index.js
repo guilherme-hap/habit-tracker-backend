@@ -23,8 +23,15 @@ const HabitTag = createHabitTagModel(sequelize, Sequelize.DataTypes);
 User.hasMany(Habit, { foreignKey: 'userId' });
 Habit.belongsTo(User, { foreignKey: 'userId' });
 
-Habit.hasMany(HabitCompletion, { foreignKey: 'habitId' });
-HabitCompletion.belongsTo(Habit, { foreignKey: 'habitId' });
+Habit.hasMany(HabitCompletion, {
+    foreignKey: 'habitId',
+    as: 'completions',
+  });
+  HabitCompletion.belongsTo(Habit, {
+    foreignKey: 'habitId',
+    as: 'habit',
+  });
+  
 
 User.hasMany(HabitCompletion, { foreignKey: 'userId' });
 HabitCompletion.belongsTo(User, { foreignKey: 'userId' });

@@ -38,26 +38,28 @@ router.post('/', verifyToken, async (req, res) => {
 
 router.get('/all', verifyToken, async (req, res) => {
     try {
-        const habits = await Habit.findAll({
-            where: {
-                userId: req.user.userId,
-            },
-            include: [
-                {
-                    model: Tag,
-                    as: 'tags',
-                    through: { attributes: [] },
-                },
-            ],
-        });
-        res.status(200).json(habits);
-    } catch (err) {
-        console.error('Erro ao buscar hábitos:', err);
-        res.status(500).json({
-            error: 'Erro ao buscar hábitos.',
-        });
+      const habits = await Habit.findAll({
+        where: { userId: req.user.userId },
+        include: [
+          { model: Tag, as: 'tags', through: { attributes: [] } },
+          { model: HabitCompletion, as: 'completions', attributes: ['date'] },
+        ],
+      });
+      const habitsWithConcludedDays = habits.map(habit => {
+        const concludedDays = habit.completions?.map(c => c.date) || [];
+        return {
+          ...habit.toJSON(),
+          concludedDays,
+        };
+      });
+  
+      res.status(200).json(habitsWithConcludedDays);
+    } catch (error) {
+      console.error('Erro ao buscar hábitos:', error);
+      res.status(500).json({ error: error.message, stack: error.stack });
     }
-});
+  });
+  
 
 router.put('/update/:id', verifyToken, async (req, res) => {
     const { id } = req.params;
