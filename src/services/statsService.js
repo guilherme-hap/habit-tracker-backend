@@ -1,7 +1,6 @@
 import { parseISO, differenceInDays } from 'date-fns';
 import { Op } from 'sequelize';
 
-
 function getExpectedOccurrences(frequency, start, end) {
     if (!start || !end) return 0;
 
@@ -24,70 +23,70 @@ export default class StatsService {
         this.models = models;
     }
 
-async getUserStats(userId, filters = {}) {
-  const { tags, frequency, startDate, endDate } = filters;
-  const whereHabit = { userId };
+    async getUserStats(userId, filters = {}) {
+        const { tags, frequency, startDate, endDate } = filters;
+        const whereHabit = { userId };
 
-  if (frequency) {
-    whereHabit.frequency = frequency;
-  }
+        if (frequency) {
+            whereHabit.frequency = frequency;
+        }
 
-  const include = [];
+        const include = [];
 
-  if (tags) {
-    const tagList = tags.split(',').map(t => t.trim());
+        if (tags) {
+            const tagList = tags.split(',').map((t) => t.trim());
 
-    include.push({
-      model: this.models.Tag,
-      as: 'tags',
-      where: {
-  [Op.or]: tagList.map(tag => ({
-    name: { [Op.like]: `%${tag}%` }
-  }))
-},
-      required: true,
-      through: { attributes: [] },
-    });
-  }
+            include.push({
+                model: this.models.Tag,
+                as: 'tags',
+                where: {
+                    [Op.or]: tagList.map((tag) => ({
+                        name: { [Op.like]: `%${tag}%` },
+                    })),
+                },
+                required: true,
+                through: { attributes: [] },
+            });
+        }
 
-  const habits = await this.models.Habit.findAll({
-    where: whereHabit,
-    include,
-  });
+        const habits = await this.models.Habit.findAll({
+            where: whereHabit,
+            include,
+        });
 
-  const stats = [];
+        const stats = [];
 
-  for (const habit of habits) {
-    const completionWhere = {
-      userId,
-      habitId: habit.id,
-    };
+        for (const habit of habits) {
+            const completionWhere = {
+                userId,
+                habitId: habit.id,
+            };
 
-    if (startDate && endDate) {
-      completionWhere.date = {
-        [Op.between]: [startDate, endDate],
-      };
+            if (startDate && endDate) {
+                completionWhere.date = {
+                    [Op.between]: [startDate, endDate],
+                };
+            }
+
+            const completions = await this.models.HabitCompletion.findAll({
+                where: completionWhere,
+            });
+
+            const expected = getExpectedOccurrences(habit.frequency, startDate, endDate);
+            const positive = completions.length;
+            const negative = Math.max(0, expected - positive);
+
+            stats.push({
+                title: habit.name,
+                frequency: habit.frequency,
+                expected,
+                positive,
+                negative,
+            });
+        }
+
+        return stats;
     }
-
-    const completions = await this.models.HabitCompletion.findAll({
-      where: completionWhere,
-    });
-
-    const expected = getExpectedOccurrences(habit.frequency, startDate, endDate);
-    const positive = completions.length;
-    const negative = Math.max(0, expected - positive);
-
-    stats.push({
-      title: habit.name,
-      frequency: habit.frequency,
-      expected,
-      positive,
-      negative,
-    });
-  }
-
-  return stats;
-}
 
     _calculateHabitStats(habit) {
         const completions = habit.HabitCompletions || [];

@@ -19,5 +19,4 @@ router.get('/', authMiddleware, async (req, res) => {
     }
 });
 
-
 export default router;
