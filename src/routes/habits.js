@@ -1,9 +1,10 @@
 import express from 'express';
 import { Tag, Habit, HabitCompletion } from '../models/index.js';
 import verifyToken from '../middleware/authMiddleware.js';
+import { Op } from 'sequelize';
 
 const router = express.Router();
-
+ 
 router.post('/', verifyToken, async (req, res) => {
     try {
         const { name, description, frequency, tags = [] } = req.body;
@@ -38,28 +39,100 @@ router.post('/', verifyToken, async (req, res) => {
 
 router.get('/all', verifyToken, async (req, res) => {
     try {
-      const habits = await Habit.findAll({
-        where: { userId: req.user.userId },
-        include: [
-          { model: Tag, as: 'tags', through: { attributes: [] } },
-          { model: HabitCompletion, as: 'completions', attributes: ['date'] },
-        ],
-      });
-      const habitsWithConcludedDays = habits.map(habit => {
-        const concludedDays = habit.completions?.map(c => c.date) || [];
-        return {
-          ...habit.toJSON(),
-          concludedDays,
-        };
-      });
-  
-      res.status(200).json(habitsWithConcludedDays);
+        const { startDate, endDate } = req.query;
+        console.log(startDate, endDate, 'query params')
+        const whereClause = { 
+            userId: req.user.userId
+        }
+        
+        if (startDate || endDate) {
+            whereClause.createdAt = {};
+
+            if (startDate){
+                whereClause.createdAt[Op.gte] = new Date(startDate);
+            }
+
+            if (endDate) {
+                whereClause.createdAt[Op.lte] = new Date(endDate);
+            }
+        }
+
+        const habits = await Habit.findAll({
+            where: whereClause,
+            include: [
+                { model: Tag, as: 'tags', through: { attributes: [] } },
+                { model: HabitCompletion, as: 'completions', attributes: ['date'] },
+            ],
+        });
+        const habitsWithConcludedDays = habits.map((habit) => {
+            const concludedDays = habit.completions?.map((c) => c.date) || [];
+            return {
+                ...habit.toJSON(),
+                concludedDays,
+            };
+        });
+
+        res.status(200).json(habitsWithConcludedDays);
     } catch (error) {
-      console.error('Erro ao buscar hábitos:', error);
-      res.status(500).json({ error: error.message, stack: error.stack });
+        console.error('Erro ao buscar hábitos:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
-  });
-  
+});
+
+router.get('/:selectedDate', verifyToken, async (req, res) => {
+    try {
+        const whereClause = { userId: req.user.userId };
+        const { selectedDate } = req.params;
+        const [year, month, day] = selectedDate.split('-');
+        const date = new Date(year, month - 1, day);
+
+        const habits = await Habit.findAll({
+            where: whereClause,
+            include: [
+                { model: Tag, as: 'tags', through: { attributes: [] } },
+                { model: HabitCompletion, as: 'completions', attributes: ['date'] },
+            ],
+        });
+
+        // Filtrar hábitos que devem aparecer hoje
+        const habitsForToday = habits.filter(habit => {
+            const habitCreatedAt = new Date(habit.createdAt);
+            habitCreatedAt.setHours(0, 0, 0, 0);
+            // Verificar se o hábito foi criado hoje ou antes
+            if (habitCreatedAt > date) return false;
+
+            switch (habit.frequency) {
+                case 'daily':
+                    return true;
+
+                case 'weekly':
+
+                    // Verifica se hoje é o mesmo dia da semana que a criação
+                    return date.getDay() === habitCreatedAt.getDay();
+
+                case 'monthly':
+                    // Verifica se hoje é o mesmo dia do mês que a criação
+                    return date.getDate() === habitCreatedAt.getDate();
+
+                default:
+                    return false;
+            }
+        });
+
+        const habitsWithConcludedDays = habitsForToday.map((habit) => {
+            const concludedDays = habit.completions?.map((c) => c.date) || [];
+            return {
+                ...habit.toJSON(),
+                concludedDays,
+            };
+        });
+
+        res.status(200).json(habitsWithConcludedDays);
+    } catch (error) {
+        console.error('Erro ao buscar hábitos:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
+    }
+});
 
 router.put('/update/:id', verifyToken, async (req, res) => {
     const { id } = req.params;
